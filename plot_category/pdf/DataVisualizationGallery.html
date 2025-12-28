@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片展览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-weight: 300;
+            margin-bottom: 40px;
+            font-size: 2rem;
+        }
+
+        .gallery {
+            max-width: 1400px;
+            margin: 0 auto;
+            column-count: 3;
+            column-gap: 20px;
+        }
+
+        .gallery-item {
+            break-inside: avoid;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            display: block;
+            cursor: pointer;
+        }
+
+        .gallery-item .caption {
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* 灯箱效果 */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .lightbox-close:hover {
+            opacity: 1;
+        }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            .gallery { column-count: 2; }
+        }
+
+        @media (max-width: 500px) {
+            .gallery { column-count: 1; }
+            body { padding: 20px 15px; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Data Visualization in R and Python Gallery</h1>
+    
+    <div class="gallery" id="gallery"></div>
+
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img id="lightbox-img" src="" alt="">
+    </div>
+
+    <script>
+        // 图片列表
+        const images = [ 'page_54_img_1.png', 'page_54_img_2.png', 'page_57_img_1.png', 'page_59_img_1.png', 'page_59_img_2.png', 'page_62_img_1.png', 'page_66_img_1.png', 'page_66_img_2.png', 'page_68_img_1.png', 'page_72_img_1.png', 'page_77_img_1.png', 'page_80_img_1.png', 'page_80_img_2.png', 'page_83_img_1.png', 'page_88_img_1.png', 'page_90_img_1.png', 'page_92_img_1.png', 'page_96_img_1.png', 'page_98_img_1.png', 'page_99_img_1.png', 'page_100_img_1.png', 'page_102_img_1.png', 'page_109_img_1.png', 'page_109_img_2.png', 'page_112_img_1.png', 'page_114_img_1.png', 'page_116_img_1.png', 'page_118_img_1.png', 'page_120_img_1.png', 'page_122_img_1.png', 'page_124_img_1.png', 'page_131_img_1.png', 'page_135_img_1.png', 'page_137_img_1.png', 'page_138_img_1.png', 'page_142_img_1.png', 'page_147_img_1.png', 'page_148_img_1.png', 'page_150_img_1.png', 'page_152_img_1.png', 'page_153_img_1.png', 'page_159_img_1.png', 'page_161_img_1.png', 'page_162_img_1.png', 'page_165_img_1.png', 'page_167_img_1.png', 'page_169_img_1.png', 'page_172_img_1.png', 'page_172_img_2.png', 'page_173_img_1.png', 'page_176_img_1.png', 'page_178_img_1.png', 'page_180_img_1.png', 'page_182_img_1.png', 'page_183_img_1.png', 'page_185_img_1.png', 'page_185_img_2.png', 'page_187_img_1.png', 'page_189_img_1.png', 'page_189_img_2.png', 'page_198_img_1.png', 'page_201_img_1.png', 'page_201_img_2.png', 'page_204_img_1.png', 'page_210_img_1.png', 'page_211_img_1.png', 'page_215_img_1.png', 'page_217_img_1.png', 'page_219_img_1.png', 'page_221_img_1.png', 'page_221_img_2.png', 'page_225_img_1.png', 'page_227_img_1.png', 'page_232_img_1.png', 'page_234_img_1.png', 'page_236_img_1.png', 'page_238_img_1.png', 'page_240_img_1.png', 'page_243_img_1.png', 'page_246_img_1.png', 'page_247_img_1.png', 'page_248_img_1.png', 'page_251_img_1.png', 'page_257_img_1.png', 'page_259_img_1.png', 'page_259_img_2.png', 'page_260_img_1.png', 'page_262_img_1.png', 'page_264_img_1.png', 'page_264_img_2.png', 'page_267_img_1.png', 'page_267_img_2.png', 'page_270_img_1.png', 'page_273_img_1.png', 'page_274_img_1.png', 'page_276_img_1.png', 'page_278_img_1.png', 'page_280_img_1.png', 'page_284_img_1.png', 'page_286_img_1.png', 'page_288_img_1.png', 'page_290_img_1.png', 'page_293_img_1.png', 'page_295_img_1.png', 'page_297_img_1.png', 'page_297_img_2.png', 'page_301_img_1.png', 'page_305_img_1.png', 'page_310_img_1.png', 'page_310_img_2.png', 'page_311_img_1.png', 'page_318_img_1.png', 'page_318_img_2.png', 'page_324_img_1.png', 'page_326_img_1.png', 'page_331_img_1.png', 'page_332_img_1.png', 'page_335_img_1.png', 'page_336_img_1.png', 'page_338_img_1.png', 'page_340_img_1.png', 'page_344_img_1.png', 'page_346_img_1.png', 'page_354_img_1.png', 'page_357_img_1.png', 'page_360_img_1.png', 'page_361_img_1.png', 'page_367_img_1.png', 'page_370_img_1.png', 'page_375_img_1.png', 'page_389_img_1.png', 'page_395_img_1.png', 'page_396_img_1.png', 'page_399_img_1.png', 'page_405_img_1.png', 'page_408_img_1.png', 'page_409_img_1.png', 'page_412_img_1.png', 'page_415_img_1.png', 'page_420_img_1.png', 'page_420_img_2.png', 'page_425_img_1.png', 'page_425_img_2.png', 'page_428_img_1.png', 'page_434_img_1.png', 'page_439_img_1.png', 'page_445_img_1.png', 'page_446_img_1.png', 'page_448_img_1.png', 'page_452_img_1.png', 'page_454_img_1.png', 'page_460_img_1.png', 'page_463_img_1.png', 'page_466_img_1.png', 'page_468_img_1.png', 'page_473_img_1.png', 'page_473_img_2.png', 'page_478_img_1.png', 'page_482_img_1.png', 'page_482_img_2.png', 'page_486_img_1.png', 'page_486_img_2.png', 'page_489_img_1.png', 'page_490_img_1.png', 'page_493_img_1.png', 'page_493_img_2.png', 'page_498_img_1.png', 'page_516_img_1.png', 'page_519_img_1.png', 'page_525_img_1.png', 'page_525_img_2.png', 'page_536_img_1.png', 'page_536_img_2.png', 'page_537_img_1.png', 'page_557_img_1.png', 'page_557_img_2.png', 'page_558_img_1.png', 'page_567_img_1.png', 'page_567_img_2.png', 'page_572_img_1.png', 'page_576_img_1.png', 'page_576_img_2.png', 'page_577_img_1.png', 'page_577_img_2.png', 'page_593_img_1.png', 'page_601_img_1.png', 'page_601_img_2.png', 'page_604_img_1.png', 'page_604_img_2.png', 'page_605_img_1.png', 'page_613_img_1.png', 'page_618_img_1.png', 'page_618_img_2.png', 'page_621_img_1.png', 'page_621_img_2.png', 'page_627_img_1.png', 'page_628_img_1.png', 'page_636_img_1.png', 'page_637_img_1.png', 'page_649_img_1.png', 'page_649_img_2.png', 'page_650_img_1.png', 'page_662_img_1.png', 'page_662_img_2.png', 'page_675_img_1.png', 'page_675_img_2.png', 'page_676_img_1.png', 'page_677_img_1.png', 'page_684_img_1.png', 'page_687_img_1.png', 'page_692_img_1.png', 'page_698_img_1.png', 'page_701_img_1.png', 'page_704_img_1.png', 'page_707_img_1.png', 'page_710_img_1.png', 'page_713_img_1.png', 'page_714_img_1.png', 'page_722_img_1.png', 'page_724_img_1.png', 'page_730_img_1.png', 'page_739_img_1.png', 'page_740_img_1.png', 'page_743_img_1.png', 'page_747_img_1.png', 'page_748_img_1.png', 'page_754_img_1.png', 'page_757_img_1.png', 'page_758_img_1.png', 'page_759_img_1.png', 'page_760_img_1.png', 'page_769_img_1.png', 'page_770_img_1.png', 'page_771_img_1.png', 'page_773_img_1.png', 'page_775_img_1.png', 'page_776_img_1.png', 'page_781_img_1.png', 'page_782_img_1.png', 'page_788_img_1.png', 'page_789_img_1.png', 'page_794_img_1.png', 'page_795_img_1.png', 'page_798_img_1.png', 'page_799_img_1.png', 'page_808_img_1.png', 'page_814_img_1.png', 'page_815_img_1.png', 'page_820_img_1.png', 'page_821_img_1.png', 'page_826_img_1.png', 'page_827_img_1.png', 'page_828_img_1.png', 'page_829_img_1.png', 'page_830_img_1.png', 'page_839_img_1.png', 'page_841_img_1.png', 'page_846_img_1.png', 'page_855_img_1.png', 'page_858_img_1.png', 'page_865_img_1.png', 'page_867_img_1.png', 'page_871_img_1.png', 'page_872_img_1.png', 'page_879_img_1.png', 'page_880_img_1.png', 'page_881_img_1.png', 'page_882_img_1.png', 'page_886_img_1.png', 'page_888_img_1.png', 'page_892_img_1.png', 'page_893_img_1.png', 'page_895_img_1.png', 'page_901_img_1.png', 'page_905_img_1.png', 'page_908_img_1.png', 'page_912_img_1.png', 'page_915_img_1.png', 'page_918_img_1.png'];
+        const basePath = "./extracted_pdf_images/";
+        const gallery = document.getElementById("gallery");
+
+        // 生成图片卡片
+        images.forEach(img => {
+            const item = document.createElement("div");
+            item.className = "gallery-item";
+            item.innerHTML = `
+                <img src="${basePath}${img}" alt="${img}" onclick="openLightbox(this.src)">
+                <div class="caption">${img.replace('.png', '').replace(/_/g, ' ')}</div>
+            `;
+            gallery.appendChild(item);
+        });
+
+        // 灯箱功能
+        function openLightbox(src) {
+            document.getElementById("lightbox-img").src = src;
+            document.getElementById("lightbox").classList.add("active");
+        }
+
+        function closeLightbox() {
+            document.getElementById("lightbox").classList.remove("active");
+        }
+
+        document.getElementById("lightbox").addEventListener("click", function(e) {
+            if (e.target === this) closeLightbox();
+        });
+
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape") closeLightbox();
+        });
+    </script>
+</body>
+</html>
